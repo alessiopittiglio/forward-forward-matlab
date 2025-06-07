@@ -1,53 +1,67 @@
+function sumerrors = evaluate_bp_model(weights, biases, batchdata, batchtargets)
+%evaluate_bp_model - Evaluate a model trained with backpropagation
+%   This function runs a forward pass on the provided data and computes the 
+%   total number of classification errors.
+%
+%   Syntax
+%     sumerrors = evaluate_bp_model(weights, biases, batchdata, ...
+%                     batchtargets)
+%
+%   Input Arguments
+%     weights - Weight matrices
+%       cell array
+%     biases - Bias vectors
+%       cell array
+%     batchdata - Input data
+%       3D matrix (numcases x numvis x numbatches)
+%     batchtargets - One-hot encoded labels
+%       3D matrix (numcases x numvis x numbatches)
+%
+%   Output Arguments
+%     sumerrors - Total number of misclassified samples
+%       integer scalar
+%
+%   See also backpropagation_train
 
-if finaltest==1
-    testbatchdata =  finaltestbatchdata;
-    testbatchtargets= finaltestbatchtargets;
-else
-    testbatchdata =  validbatchdata;
-    testbatchtargets= validbatchtargets;
-end;        
+% =========================================================================
+%   1. INITIALIZATION
+% =========================================================================
+numlayers = length(weights);
+numbatches = size(batchdata, 3);
+sumerrors = 0;
+normstates = cell(1, numlayers - 1);
 
-numtestbatches=size(testbatchdata,3);
-numtestcases = size(testbatchdata,1);
+% =========================================================================
+%   2. EVALUATION LOOP (over all batches)
+% =========================================================================
+for batch = 1:numbatches
+    % Extract the current minibatch
+    data = batchdata(:, :, batch);
+    targets = batchtargets(:, :, batch);
 
-testsumerrors=0;
-testlogcost = 0;
-
-for batch = 1:numtestbatches
-    testdata =  testbatchdata(:,:,batch);
-    normstates{1} = ffnormrows(testdata);
-    targets= testbatchtargets(:,:,batch);
+    % ---------------------------------
+    %   FORWARD PASS
+    % ---------------------------------
+    normstates{1} = ffnormrows(data);
     for l = 2:numlayers-1
-        states{l} = max(0, normstates{l-1}*weights{l} + biases{l});
-        normstates{l} = ffnormrows(states{l});
-    end;
-    totin{numlayers} = normstates{numlayers-1}*weights{numlayers} + biases{numlayers};
+        totin = normstates{l-1} * weights{l} + biases{l};
+        states = max(0, totin); % ReLU activation
+        normstates{l} = ffnormrows(states);
+    end
+    % Final output layer (logits)
+    labin = normstates{numlayers-1} * weights{numlayers} + biases{numlayers};
 
-    labin = totin{numlayers};
-    labin = labin - repmat(max(labin,[],2), 1, numlab);
-    unnormlabprobs = exp(labin);
-    
-    testpredictions = unnormlabprobs./repmat(sum(unnormlabprobs,2), 1, numlab);
-    %% correctprobs=sum(testpredictions.*targets,2);
-    thistestlogcosts =  - sum(sum(targets.*(log(tiny+testpredictions))));
-    testlogcost = testlogcost + sum(thistestlogcosts)/numtestbatches;
-    % we report the log cost per batch (not per case).
-    [score, testguesses] = max(testpredictions,[],2);
-    [tscore, targetindices]=max(targets,[],2);
-    
-    testerrors = sum(testguesses ~= targetindices);
-    testsumerrors=   testsumerrors+testerrors;
-end; %%end of the for loop over batches
-    
-if finaltest==1
-    fprintf(1, 'Softmax test errs %4i  \n', testsumerrors);
-else
-    fprintf(1, 'Softmax valid errs %4i  \n', testsumerrors);
-end
+    % ---------------------------------
+    %   PREDICTION
+    % ---------------------------------
+    [~, guesses] = max(labin, [], 2);
+    [~, targetindices] = max(targets, [], 2);
 
+    % ---------------------------------
+    %   ERROR CALCULATION
+    % ---------------------------------
+    errors = sum(guesses ~= targetindices);
+    sumerrors = sumerrors + errors;
+end % end of minibatches loop
 
-
-
-
-
-
+end % end of function

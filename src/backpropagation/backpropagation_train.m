@@ -1,7 +1,6 @@
 function [final_weights, final_biases, loss_history] = backpropagation_train( ...
     batchdata, batchtargets, ...
     validbatchdata, validbatchtargets, ...
-    finaltestbatchdata, finaltestbatchtargets, ...
     maxepoch, restart)
 %backpropagation_train - Train a feed-forward neural network using backpropagation
 %   This function is designed as a "dual" to Hinton's ffnew.m, using the 
@@ -84,8 +83,6 @@ if restart == 1
     batchtargets = single(batchtargets);
     validbatchdata = single(validbatchdata);
     validbatchtargets = single(validbatchtargets);
-    finaltestbatchdata = single(finaltestbatchdata);
-    finaltestbatchtargets = single(finaltestbatchtargets);
 end
 
 % =========================================================================
@@ -167,16 +164,14 @@ for epoch = epoch:maxepoch
 
     % Perform validation test at specified frequency
     if rem(epoch, testfreq) == 0
-       evaluate_bp_model;
+       valsumerrors = evaluate_bp_model(weights, biases, validbatchdata, validbatchtargets);
+       fprintf(1, 'Softmax valid errs %4i  \n', valsumerrors);
     end
 end % end of epochs loop
 
 % =========================================================================
-%   4. FINAL TEST & OUTPUT
+%   4. OUTPUT
 % =========================================================================
-finaltest = 1;
-evaluate_bp_model;
-
 % Assign final parameters to output variables
 final_weights = weights;
 final_biases = biases;
