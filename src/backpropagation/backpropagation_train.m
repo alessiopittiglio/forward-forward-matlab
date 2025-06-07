@@ -2,27 +2,39 @@ function [final_weights, final_biases, loss_history] = backpropagation_train( ..
     batchdata, batchtargets, ...
     validbatchdata, validbatchtargets, ...
     maxepoch, restart)
-%backpropagation_train - Train a feed-forward neural network using backpropagation
+%backpropagation_train - Train a neural network using backpropagation
 %   This function is designed as a "dual" to Hinton's ffnew.m, using the 
 %   same architecture, data loading, and hyperparameters to ensure a fair 
 %   comparison. It trains a feed-forward neural network with ReLU 
 %   activations and row-wise normalization on the MNIST dataset.
 %
 %   Syntax
-%     [final_weights, final_biases, loss_history] = backpropagation_train()
+%     [final_weights, final_biases, loss_history] = backpropagation_train( ...
+%         batchdata, batchtargets, ...
+%         validbatchdata, validbatchtargets, ...
+%         maxepoch, restart)
+%
+%   Input Arguments
+%     batchdata - Training inputs
+%       3D matrix (numcases x numvis x numbatches)
+%     batchtargets - Training labels
+%       3D matrix (numcases x numlab x numbatches)
+%     validbatchdata - Validation inputs
+%       3D matrix
+%     validbatchtargets - Validation labels
+%       3D matrix
+%     maxepoch - Maximum number of training epochs
+%       positive integer scalar
+%     restart - Flag to re-initialize training (1) or continue (0)
+%       1 | 0
 %
 %   Output Arguments
-%     final_weights - Cell array of weight matrices for each layer
-%     final_biases - Cell array of bias vectors for each layer
-%     loss_history - Vector containing training loss per epoch
-%
-%   Notes
-%     - This function relies on several variables being present in the 
-%       calling workspace (e.g., maxepoch, restart, and the data and 
-%       targets
-%       variables). This design choice mirrors the original ffnew.m script.
-%     - It also calls external helper functions for testing 
-%       (evaluate_bp_model) and normalization (ffnormrows)
+%     final_weights - Final weight matrices
+%       cell array
+%     final_biases - Final bias vectors
+%       cell array
+%     loss_history - Training loss per epoch
+%       vector
 
 % =========================================================================
 %   1. HYPERPARAMETERS & CONFIGURATION
@@ -30,7 +42,7 @@ function [final_weights, final_biases, loss_history] = backpropagation_train( ..
 finaltest = 0;
 myrandomseed = 17;
 wc = 0.001;         % Weight cost (L2 regularization).
-epsilon = 0.4;      % Learning rate for weight updates.
+epsilon = 0.25;     % Learning rate for weight updates.
 epsgain = 1;        % Multiplier on all weight changes, can decay over time.
 delay = 0.9;        % Momentum term for smoothing gradients (1 - 0.1).
 
@@ -172,7 +184,6 @@ end % end of epochs loop
 % =========================================================================
 %   4. OUTPUT
 % =========================================================================
-% Assign final parameters to output variables
 final_weights = weights;
 final_biases = biases;
 
