@@ -22,8 +22,8 @@ function [final_weights, final_biases, loss_history] = backpropagation_train( ..
 %       calling workspace (e.g., maxepoch, restart, and the data and 
 %       targets
 %       variables). This design choice mirrors the original ffnew.m script.
-%     - It also calls external helper functions for testing (fbsoftmaxtest)
-%       and normalization (ffnormrows)
+%     - It also calls external helper functions for testing 
+%       (evaluate_bp_model) and normalization (ffnormrows)
 
 % =========================================================================
 %   1. HYPERPARAMETERS & CONFIGURATION
@@ -167,7 +167,7 @@ for epoch = epoch:maxepoch
 
     % Perform validation test at specified frequency
     if rem(epoch, testfreq) == 0
-       fbsoftmaxtest;
+       evaluate_bp_model;
     end
 end % end of epochs loop
 
@@ -175,7 +175,7 @@ end % end of epochs loop
 %   4. FINAL TEST & OUTPUT
 % =========================================================================
 finaltest = 1;
-fbsoftmaxtest;
+evaluate_bp_model;
 
 % Assign final parameters to output variables
 final_weights = weights;
