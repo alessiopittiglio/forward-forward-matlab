@@ -27,7 +27,7 @@ function [final_weights, final_biases, loss_history] = backpropagation_train()
 finaltest = 0;
 myrandomseed = 17;
 wc = 0.001;         % Weight cost (L2 regularization).
-epsilon = 0.4;      % Learning rate for weight updates.
+epsilon = 0.01;     % Learning rate for weight updates.
 epsgain = 1;        % Multiplier on all weight changes, can decay over time.
 delay = 0.9;        % Momentum term for smoothing gradients (1 - 0.1).
 
