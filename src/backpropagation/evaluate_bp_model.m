@@ -33,7 +33,7 @@ numlayers = length(weights);
 numbatches = size(batchdata, 3);
 sumerrors = 0;
 states = cell(1, numlayers);
-normstates = cell(1, numlayers - 1);
+normstates = cell(1, numlayers);
 
 % =========================================================================
 %   2. EVALUATION LOOP (over all batches)
