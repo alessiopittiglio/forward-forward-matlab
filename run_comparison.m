@@ -81,6 +81,7 @@ fprintf('----------------------------------------------------\n');
 fprintf('  STARTING: Backpropagation algorithm training      \n');
 fprintf('----------------------------------------------------\n');
 
+use_normalization = false; % Whether to normalize the data
 
 % Set specific hyperparameters for the BP script
 % Note: We use the same variable names (`maxepoch`, `restart`) to make the 
@@ -92,14 +93,16 @@ tic;
 [bp_weights, bp_biases, bp_loss_history] = backpropagation_train( ...
     batchdata, batchtargets, ...
     validbatchdata, validbatchtargets, ...
-    maxepoch, restart);
+    maxepoch, restart, ...
+    use_normalization);
 bp_training_time = toc;
 
 fprintf('\nBackpropagation training finished.\n');
 fprintf('Total BP Training Time: %.2f seconds.\n\n', bp_training_time);
 
 bp_test_error = evaluate_bp_model(bp_weights, bp_biases, ...
-    finaltestbatchdata, finaltestbatchtargets);
+    finaltestbatchdata, finaltestbatchtargets, ...
+    use_normalization);
 
 bp_test_accuracy = (10000 - bp_test_error) / 10000;
 fprintf('BP Test Accuracy: %.2f%%\n\n', bp_test_accuracy * 100);
@@ -120,13 +123,19 @@ if ~exist('results/plots', 'dir')
     mkdir('results/plots');
 end
 
-fig = figure('Visible', 'off'); 
+filename = 'bp_curve';
+if use_normalization
+    filename = [filename '_with_norm'];
+else
+    filename = [filename '_no_norm'];
+end
+fig = figure('Visible', 'off', 'Position', [100, 100, 600, 400]); 
 plot(1:num_epochs, bp_loss_history, 'b-', 'LineWidth', 2);
 title('Learning Curve: Loss per Epoch');
 xlabel('Epoch');
 ylabel('Training Loss');
 grid on;
-saveas(gcf, 'results/plots/learning_curves.png');
+saveas(gcf, ['results/plots/' filename '.png']);
 close(fig);
 
 fileID = fopen('results/benchmarks.md', 'w');

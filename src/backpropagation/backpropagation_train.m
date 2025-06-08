@@ -1,7 +1,8 @@
 function [final_weights, final_biases, loss_history] = backpropagation_train( ...
     batchdata, batchtargets, ...
     validbatchdata, validbatchtargets, ...
-    maxepoch, restart)
+    maxepoch, restart, ...
+    use_normalization)
 %backpropagation_train - Train a neural network using backpropagation
 %   This function is designed as a "dual" to Hinton's ffnew.m, using the 
 %   same architecture, data loading, and hyperparameters to ensure a fair 
@@ -12,7 +13,8 @@ function [final_weights, final_biases, loss_history] = backpropagation_train( ..
 %     [final_weights, final_biases, loss_history] = backpropagation_train( ...
 %         batchdata, batchtargets, ...
 %         validbatchdata, validbatchtargets, ...
-%         maxepoch, restart)
+%         maxepoch, restart, ...
+%         use_normalization)
 %
 %   Input Arguments
 %     batchdata - Training inputs
@@ -27,6 +29,8 @@ function [final_weights, final_biases, loss_history] = backpropagation_train( ..
 %       positive integer scalar
 %     restart - Flag to re-initialize training (1) or continue (0)
 %       1 | 0
+%     use_normalization - Flag to normalize data (true) or not (false)
+%       true | false
 %
 %   Output Arguments
 %     final_weights - Final weight matrices
@@ -119,15 +123,28 @@ for epoch = epoch:maxepoch
         % ---------------------------------
         %   FORWARD PASS
         % ---------------------------------
-        normstates{1} = ffnormrows(data);
+        if use_normalization
+            normstates{1} = ffnormrows(data);
+        else
+            states{1} = data;
+        end
         for l = 2:numlayers-1
-            totin{l} = normstates{l-1} * weights{l} + biases{l};
-            states{l} = max(0, totin{l}); % ReLU activation
-            normstates{l} = ffnormrows(states{l});
+            if use_normalization
+                totin{l} = normstates{l-1} * weights{l} + biases{l};
+                states{l} = max(0, totin{l}); % ReLU activation
+                normstates{l} = ffnormrows(states{l});
+            else
+                totin{l} = states{l-1} * weights{l} + biases{l};
+                states{l} = max(0, totin{l});
+            end
         end
 
         % Output layer (pre-softmax logits)
-        totin{numlayers} = normstates{numlayers-1} * weights{numlayers} + biases{numlayers};
+        if use_normalization
+            totin{numlayers} = normstates{numlayers-1} * weights{numlayers} + biases{numlayers};
+        else
+            totin{numlayers} = states{numlayers-1} * weights{numlayers} + biases{numlayers};
+        end
 
         % Softmax and Cross-Entropy Loss
         labin = totin{numlayers};
@@ -154,7 +171,11 @@ for epoch = epoch:maxepoch
         %   WEIGHTS UPDATE
         % ---------------------------------
         for l = numlayers:-1:2
-            dCbydweights{l} = normstates{l-1}' * dCbydin{l};
+            if use_normalization
+                dCbydweights{l} = normstates{l-1}' * dCbydin{l};
+            else
+                dCbydweights{l} = states{l-1}' * dCbydin{l};
+            end     
             dCbydbiases{l} = sum(dCbydin{l});
             
             % Apply momentum
@@ -176,7 +197,9 @@ for epoch = epoch:maxepoch
 
     % Perform validation test at specified frequency
     if rem(epoch, testfreq) == 0
-       valsumerrors = evaluate_bp_model(weights, biases, validbatchdata, validbatchtargets);
+       valsumerrors = evaluate_bp_model(weights, biases, ...
+        validbatchdata, validbatchtargets, ...
+        use_normalization);
        fprintf(1, 'Softmax valid errs %4i  \n', valsumerrors);
     end
 end % end of epochs loop
